@@ -9,8 +9,9 @@ from torch.cuda import device
 from torch.utils.data import TensorDataset, DataLoader
 
 from dataloader import read_bci_data
-from EEGNet import EEGNet
-from DCN2 import DeepConvNet
+#from EEGNet import EEGNet
+from WTFNet import WTFNet as EEGNet
+from WTFNet import SE
 
 def get_bci_dataloaders():
     train_x, train_y, test_x, test_y = read_bci_data()
@@ -59,25 +60,21 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     nets1 = {
-        "EEG_elu": EEGNet(nn.ELU).to(device),
-        "EEG_relu": EEGNet(nn.ReLU).to(device),
-        "EEG_relu6": EEGNet(nn.ReLU6).to(device),
-        "EEG_leaky_relu": EEGNet(nn.LeakyReLU).to(device)
+        "SE_relu": EEGNet(nn.ReLU, sq=True).to(device),
+        "SE_relu6": EEGNet(nn.ReLU6, sq=True).to(device),
+        #"EEG_elu": EEGNet(nn.ELU).to(device),
+        "relu": EEGNet(nn.ReLU).to(device),
+        "relu6": EEGNet(nn.ReLU6).to(device),
+        #"EEG_leaky_relu": EEGNet(nn.LeakyReLU).to(device)
     }
 
-    nets2 = {
-            "DCN_elu": DeepConvNet(nn.ELU).to(device),
-            "DCN_relu": DeepConvNet(nn.ReLU).to(device),
-            "DCN_relu6": DeepConvNet(nn.ReLU6).to(device),
-            "DCN_leaky_relu": DeepConvNet(nn.LeakyReLU).to(device)
-    }
     
     nets = nets1
     #nets = nets2
     
     # Training setting
     loss_fn = nn.CrossEntropyLoss()
-    learning_rates = {0.0025}
+    learning_rates = {0.0025, 0.0028}
 
     optimizer = torch.optim.Adam
     optimizers = {
@@ -86,14 +83,12 @@ def main():
         for learning_rate in learning_rates
     }
 
-    epoch_size = 300
+    epoch_size = 250
     batch_size = 64
     acc = train(nets, epoch_size, batch_size, loss_fn, optimizers)
     df = pd.DataFrame.from_dict(acc)
     
-    #df.to_csv('eeg_0025_0001.csv')
     print(df)
-    #display(df)
     return df
 
 # This train is for demo and recording accuracy
@@ -140,14 +135,13 @@ def train(nets, epoch_size, batch_size, loss_fn, optimizers):
         for key, value in test_correct.items():
             accuracy[key + "_test"] += [(value * 100.0) / len(testDataset)]
 
-        if epoch % 100 == 0:
+        if epoch % 10 == 0:
             print('epoch : ', epoch, ' loss : ', loss.item())
             print(pd.DataFrame.from_dict(accuracy).iloc[[epoch]])
             #display(pd.DataFrame.from_dict(accuracy).iloc[[epoch]])
             print('')
         torch.cuda.empty_cache()
     showResult(title='Activation function comparison(EEGNet)'.format(epoch + 1), **accuracy)
-    #showResult(title='Activation function comparison(DCN)'.format(epoch + 1), **accuracy)
     return accuracy
 
 if __name__ == '__main__':

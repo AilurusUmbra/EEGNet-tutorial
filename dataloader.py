@@ -1,10 +1,10 @@
 import numpy as np
 
 def read_bci_data():
-    S4b_train = np.load('/home/ailurus/2020S/2019DL/lab2/S4b_train.npz')
-    X11b_train = np.load('/home/ailurus/2020S/2019DL/lab2/X11b_train.npz')
-    S4b_test = np.load('/home/ailurus/2020S/2019DL/lab2/S4b_test.npz')
-    X11b_test = np.load('/home/ailurus/2020S/2019DL/lab2/X11b_test.npz')
+    S4b_train = np.load('./S4b_train.npz')
+    X11b_train = np.load('./X11b_train.npz')
+    S4b_test = np.load('./S4b_test.npz')
+    X11b_test = np.load('./X11b_test.npz')
 
     train_data = np.concatenate((S4b_train['signal'], X11b_train['signal']), axis=0)
     train_label = np.concatenate((S4b_train['label'], X11b_train['label']), axis=0)
